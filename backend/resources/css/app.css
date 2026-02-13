@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+
+/* Use a manual `.dark` class (persisted in localStorage) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Make the UI feel less "tiny" on large displays */
+@media (min-width: 1024px) {
+    html {
+        font-size: 17px;
+    }
+}
+
+/* Dark mode: scrollbar + form text */
+html.dark {
+    scrollbar-color: rgb(71 85 105) rgb(2 6 23);
+    scrollbar-width: thin;
+}
+
+html.dark ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: rgb(2 6 23);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: rgb(71 85 105);
+    border-radius: 9999px;
+    border: 2px solid rgb(2 6 23);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgb(100 116 139);
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+    color: rgb(255 255 255);
+    color-scheme: dark;
+}
+
+/* Tables: highlight the full row on hover (all cells) */
+.table-grid tbody tr {
+    @apply cursor-pointer;
+}
+
+.table-grid tbody tr:hover > td {
+    @apply bg-slate-50 dark:bg-slate-900/40;
+}
