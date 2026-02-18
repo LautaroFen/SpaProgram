@@ -38,4 +38,18 @@ class ServicesController extends Controller
 
         return redirect()->to(route('services.index', [], false));
     }
+
+    public function update(StoreRequest $request, Service $service)
+    {
+        $data = $request->payload();
+
+        $service->update($data);
+
+        AuditLog::record('update', Service::class, (int) $service->id, [
+            'summary' => 'Edición de servicio',
+            'name' => $service->name,
+        ]);
+
+        return redirect()->to(route('services.index', [], false));
+    }
 }

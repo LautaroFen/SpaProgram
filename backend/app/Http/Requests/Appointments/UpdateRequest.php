@@ -22,7 +22,7 @@ class UpdateRequest extends FormRequest
             'client_id' => ['required', 'integer', 'exists:clients,id'],
             'user_id' => ['required', 'integer', 'exists:users,id'],
 
-            'start_date' => ['required', 'date'],
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
 
             'deposit' => ['nullable', 'numeric', 'min:0'],

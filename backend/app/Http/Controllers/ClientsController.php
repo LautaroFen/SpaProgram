@@ -97,4 +97,5 @@ class ClientsController extends Controller
 
         return redirect()->to(route('clients.index', [], false));
     }
+
 }

@@ -10,7 +10,7 @@ class ClientsIndexQuery
     /** @param array{q:?string,has_debt:?bool} $filters */
     public function build(array $filters): Builder
     {
-        $query = Client::query();
+        $query = Client::query()->select('clients.*');
 
         if (! empty($filters['q'])) {
             $term = $filters['q'];

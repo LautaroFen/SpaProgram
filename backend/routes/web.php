@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard');
 
 Route::get('/verify/client-email/{client}', [ClientEmailVerificationController::class, 'verify'])
-	->middleware('signed')
+	->middleware('signed:relative')
 	->name('clients.email.verify');
 
 Route::get('/verify/user-email/{user}', [UserEmailVerificationController::class, 'verify'])
-	->middleware('signed')
+	->middleware('signed:relative')
 	->name('users.email.verify');
 
 Route::middleware('guest')->group(function () {
@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
 
 		Route::get('/payments', [PaymentsController::class, 'index'])->name('payments.index');
 		Route::post('/payments', [PaymentsController::class, 'store'])->name('payments.store');
+		Route::post('/payments/{payment}/complete', [PaymentsController::class, 'complete'])->name('payments.complete');
 		Route::patch('/payments/{payment}', [PaymentsController::class, 'update'])->name('payments.update');
 		Route::delete('/payments/{payment}', [PaymentsController::class, 'destroy'])->name('payments.destroy');
 	});
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
 	// Only Admin
 	Route::middleware('role.access:admin')->group(function () {
 		Route::get('/audit-logs', [AuditLogsController::class, 'index'])->name('audit-logs.index');
+		Route::post('/audit-logs/export', [AuditLogsController::class, 'export'])->name('audit-logs.export');
+		Route::post('/audit-logs/export-and-purge', [AuditLogsController::class, 'exportAndPurge'])->name('audit-logs.export-and-purge');
 		Route::get('/users', [UsersController::class, 'index'])->name('users.index');
 		Route::post('/users', [UsersController::class, 'store'])->name('users.store');
 		Route::patch('/users/{user}', [UsersController::class, 'update'])->name('users.update');
@@ -59,7 +62,9 @@ Route::middleware('auth')->group(function () {
 		Route::patch('/users/roles/{role}', [UsersController::class, 'updateRole'])->name('users.roles.update');
 		Route::get('/services', [ServicesController::class, 'index'])->name('services.index');
 		Route::post('/services', [ServicesController::class, 'store'])->name('services.store');
+		Route::patch('/services/{service}', [ServicesController::class, 'update'])->name('services.update');
 		Route::get('/expenses', [\App\Http\Controllers\ExpensesController::class, 'index'])->name('expenses.index');
 		Route::post('/expenses', [\App\Http\Controllers\ExpensesController::class, 'store'])->name('expenses.store');
+		Route::patch('/expenses/{expense}', [\App\Http\Controllers\ExpensesController::class, 'update'])->name('expenses.update');
 	});
 });

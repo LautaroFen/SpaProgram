@@ -32,11 +32,11 @@ class AppointmentsIndexQuery
             }], 'amount_cents')
             ->orderByDesc('start_at');
 
-        // Only show appointments from today onwards.
-        $query->where('start_at', '>=', $todayStart);
-
         if ($weekStart !== null && $weekEnd !== null) {
             $query->whereBetween('start_at', [$weekStart, $weekEnd]);
+        } else {
+            // Only show appointments from today onwards when not filtering by week.
+            $query->where('start_at', '>=', $todayStart);
         }
 
         if (! empty($filters['status'])) {

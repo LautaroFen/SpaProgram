@@ -32,39 +32,57 @@ class AppointmentsController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $todayStart = CarbonImmutable::now()->startOfDay();
-        $appointments->through(function (Appointment $appt) use ($todayStart) {
+        $now = CarbonImmutable::now();
+        $todayStart = $now->startOfDay();
+        $appointments->through(function (Appointment $appt) use ($now, $todayStart) {
             $paidCents = (int) ($appt->paid_cents_sum ?? 0);
             $depositCents = (int) ($appt->deposit_cents ?? 0);
             $dueCents = max(0, ((int) ($appt->price_cents ?? 0)) - $depositCents);
             $remainingCents = max(0, $dueCents - $paidCents);
 
-            $uiStatus = (string) ($appt->status ?? 'scheduled');
+            $status = (string) ($appt->status ?? 'scheduled');
+            $appt->ui_status = $status;
 
-            if ($uiStatus === 'scheduled') {
-                if (($paidCents > 0 || $depositCents > 0) && $remainingCents > 0) {
-                    $uiStatus = 'pre_paid';
-                } elseif ($remainingCents > 0 && $todayStart->greaterThan($appt->start_at->copy()->startOfDay())) {
-                    $uiStatus = 'overdue';
-                }
+            if (in_array($status, ['cancelled', 'no_show'], true)) {
+                $appt->ui_status_label = [
+                    'cancelled' => 'Cancelado',
+                    'no_show' => 'No asistió',
+                ][$status] ?? '—';
+
+                $appt->ui_status_class = match ($status) {
+                    'cancelled' => 'bg-slate-100 text-slate-700',
+                    'no_show' => 'bg-slate-100 text-slate-700',
+                    default => 'bg-slate-100 text-slate-700',
+                };
+
+                return $appt;
             }
 
-            $appt->ui_status = $uiStatus;
-            $appt->ui_status_label = [
-                'scheduled' => 'Programado',
-                'pre_paid' => 'Pago parcial',
-                'overdue' => 'Atrasado',
-                'paid' => 'Pagado',
-                'cancelled' => 'Cancelado',
-                'no_show' => 'No asistió',
-            ][$uiStatus] ?? '—';
+            $isFinished = $appt->end_at !== null && $now->greaterThan($appt->end_at);
+            $stageLabel = $isFinished ? 'Finalizado' : 'Programado';
 
-            $appt->ui_status_class = match ($uiStatus) {
-                'paid' => 'bg-emerald-50 text-emerald-700',
-                'scheduled' => 'bg-amber-50 text-amber-700',
-                'pre_paid' => 'bg-blue-50 text-blue-700',
-                'overdue' => 'bg-red-50 text-red-700',
-                default => 'bg-slate-100 text-slate-700',
+            $paymentLabel = 'Sin seña';
+
+            if ($remainingCents === 0 && ($status === 'paid' || $paidCents > 0 || $depositCents > 0)) {
+                $paymentLabel = 'Pagado';
+            } elseif ($paidCents > 0) {
+                $paymentLabel = 'Pago parcial';
+            } elseif ($depositCents > 0) {
+                $paymentLabel = 'Señado';
+            } elseif ($isFinished) {
+                $paymentLabel = 'Sin pagos';
+            } else {
+                $paymentLabel = 'Sin seña';
+            }
+
+            $appt->ui_status_label = $stageLabel.' - '.$paymentLabel;
+
+            $appt->ui_status_class = match ($paymentLabel) {
+                'Pagado' => 'bg-emerald-50 text-emerald-700',
+                'Señado' => 'bg-blue-50 text-blue-700',
+                'Pago parcial' => 'bg-blue-50 text-blue-700',
+                'Sin pagos' => 'bg-red-50 text-red-700',
+                default => 'bg-amber-50 text-amber-700',
             };
 
             return $appt;
@@ -105,17 +123,22 @@ class AppointmentsController extends Controller
         $service = Service::query()->findOrFail($data['service_id']);
 
         $depositCents = max(0, (int) ($data['deposit_cents'] ?? 0));
+        $discountPercent = max(0, min(100, (int) ($data['discount_percent'] ?? 0)));
         $servicePriceCents = (int) ($service->price_cents ?? 0);
-        if ($depositCents > $servicePriceCents) {
+
+        $discountCents = (int) round($servicePriceCents * ($discountPercent / 100));
+        $finalPriceCents = max(0, $servicePriceCents - $discountCents);
+
+        if ($depositCents > $finalPriceCents) {
             throw ValidationException::withMessages([
-                'deposit' => 'El anticipo no puede ser mayor al precio del servicio.',
+                'deposit' => 'El anticipo no puede ser mayor al total con descuento.',
             ]);
         }
 
         $startAt = CarbonImmutable::parse($data['start_date'].' '.$data['start_time']);
         $endAt = $startAt->addMinutes((int) $service->duration_minutes);
 
-        [$appointment, $client] = DB::transaction(function () use ($data, $service, $servicePriceCents, $depositCents, $startAt, $endAt) {
+        [$appointment, $client] = DB::transaction(function () use ($data, $service, $servicePriceCents, $finalPriceCents, $discountPercent, $depositCents, $startAt, $endAt) {
             $clientId = $data['client_id'];
             if (empty($clientId)) {
                 $client = Client::create([
@@ -132,7 +155,7 @@ class AppointmentsController extends Controller
             }
 
             $clientBalanceBeforeCents = (int) ($client->balance_cents ?? 0);
-            $debtIncreaseCents = max(0, $servicePriceCents - $depositCents);
+            $debtIncreaseCents = max(0, $finalPriceCents - $depositCents);
             $client->update([
                 'balance_cents' => $clientBalanceBeforeCents + $debtIncreaseCents,
             ]);
@@ -143,7 +166,8 @@ class AppointmentsController extends Controller
                 'service_id' => (int) $service->id,
                 'start_at' => $startAt,
                 'end_at' => $endAt,
-                'price_cents' => $servicePriceCents,
+                'price_cents' => $finalPriceCents,
+                'discount_percent' => $discountPercent,
                 'deposit_cents' => $depositCents,
                 'client_balance_before_cents' => $clientBalanceBeforeCents,
                 'status' => 'scheduled',
@@ -155,7 +179,7 @@ class AppointmentsController extends Controller
                 'client_id' => (int) $client->id,
                 'service_id' => (int) $service->id,
                 'start_at' => $startAt->toDateTimeString(),
-                'price' => number_format($servicePriceCents / 100, 2, ',', '.'),
+                'price' => number_format($finalPriceCents / 100, 2, ',', '.'),
                 'deposit' => number_format($depositCents / 100, 2, ',', '.'),
             ]);
 
@@ -313,25 +337,33 @@ class AppointmentsController extends Controller
                     }], 'amount_cents')
                     ->findOrFail((int) $appointment->id);
 
-                $hasPayments = ((int) ($appointment->paid_cents_sum ?? 0)) > 0;
-                $hasDeposit = ((int) ($appointment->deposit_cents ?? 0)) > 0;
-
-                if ($hasPayments || $hasDeposit) {
-                    throw ValidationException::withMessages([
-                        'delete' => 'No se puede borrar un turno si ya tiene un pago parcial/completo o anticipo registrado.',
-                    ]);
-                }
-
                 $client = Client::query()->lockForUpdate()->findOrFail((int) $appointment->client_id);
 
-                $debtIncreaseCents = max(0, ((int) ($appointment->price_cents ?? 0)) - ((int) ($appointment->deposit_cents ?? 0)));
-                if ($debtIncreaseCents > 0) {
-                    $client->update([
-                        'balance_cents' => max(0, ((int) $client->balance_cents) - $debtIncreaseCents),
-                    ]);
+                $appointmentId = (int) $appointment->id;
+
+                $payments = \App\Models\Payment::query()
+                    ->lockForUpdate()
+                    ->where('appointment_id', $appointmentId)
+                    ->whereIn('status', ['paid', 'partial'])
+                    ->get(['id', 'amount_cents', 'status']);
+
+                $paymentsRevertedCents = (int) $payments->sum('amount_cents');
+
+                if ($payments->isNotEmpty()) {
+                    \App\Models\Payment::query()
+                        ->whereIn('id', $payments->pluck('id'))
+                        ->update([
+                            'status' => 'void',
+                            'appointment_id' => null,
+                        ]);
                 }
 
-                $appointmentId = (int) $appointment->id;
+                $debtIncreaseCents = max(0, ((int) ($appointment->price_cents ?? 0)) - ((int) ($appointment->deposit_cents ?? 0)));
+
+                $client->update([
+                    'balance_cents' => max(0, ((int) $client->balance_cents) + $paymentsRevertedCents - $debtIncreaseCents),
+                ]);
+
                 $appointment->delete();
 
                 AuditLog::record('appointment.delete', Appointment::class, $appointmentId, [
@@ -339,6 +371,8 @@ class AppointmentsController extends Controller
                     'client_id' => (int) $client->id,
                     'service_id' => (int) $appointment->service_id,
                     'start_at' => optional($appointment->start_at)->toDateTimeString(),
+                    'reverted_payments_cents' => $paymentsRevertedCents,
+                    'reverted_debt_cents' => $debtIncreaseCents,
                 ]);
             });
         } catch (ValidationException $e) {

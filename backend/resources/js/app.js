@@ -24,30 +24,73 @@ const setStoredTheme = (theme) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const themeToggle = document.querySelector('[data-theme-toggle]');
-  if (themeToggle) {
-    const syncLabel = () => {
-      const isDark = document.documentElement.classList.contains('dark');
-      themeToggle.textContent = isDark ? 'Modo claro' : 'Modo oscuro';
-      themeToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+
+  // Strict numeric inputs: prevent scientific notation (e/E) which HTML number inputs allow.
+  // This avoids users typing values like "1e6".
+  document.querySelectorAll('input[type="number"]').forEach((inputEl) => {
+    if (inputEl.dataset.strictNumberWired === '1') return;
+    inputEl.dataset.strictNumberWired = '1';
+
+    const sanitize = () => {
+      const value = String(inputEl.value ?? '');
+      if (!/[eE]/.test(value)) return;
+      inputEl.value = value.replace(/[eE]/g, '');
     };
 
-    themeToggle.addEventListener('click', (event) => {
+    inputEl.addEventListener('keydown', (event) => {
+      if (event.key === 'e' || event.key === 'E') {
+        event.preventDefault();
+      }
+    });
+
+    // Covers IME and some mobile keyboards
+    inputEl.addEventListener('beforeinput', (event) => {
+      const data = event.data;
+      if (data === 'e' || data === 'E') {
+        event.preventDefault();
+      }
+    });
+
+    // Covers paste and other programmatic insertions
+    inputEl.addEventListener('input', sanitize);
+    inputEl.addEventListener('paste', () => setTimeout(sanitize, 0));
+  });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {
+        // ignore
+      });
+    });
+  }
+
+  const themeToggles = document.querySelectorAll('[data-theme-toggle]');
+  if (themeToggles.length) {
+    const syncToggles = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const nextLabel = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+
+      themeToggles.forEach((toggle) => {
+        toggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        if (!toggle.hasAttribute('aria-label')) toggle.setAttribute('aria-label', nextLabel);
+        toggle.setAttribute('title', nextLabel);
+      });
+    };
+
+    const onToggle = (event) => {
       event.preventDefault();
       const isDark = document.documentElement.classList.contains('dark');
       const next = isDark ? 'light' : 'dark';
       setStoredTheme(next);
-      applyTheme(next);
 
-      // Update any placeholder selects that rely on text color classes.
-      document.querySelectorAll('select[data-placeholder-select]').forEach((select) => {
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-      });
+      // Reload so all components re-render with the new theme.
+      window.location.reload();
+    };
 
-      syncLabel();
+    themeToggles.forEach((toggle) => {
+      toggle.addEventListener('click', onToggle);
     });
 
-    syncLabel();
+    syncToggles();
   }
 
   const button = document.getElementById('mobileMenuButton');
@@ -137,6 +180,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   wireInputFilters();
 
+  document.querySelectorAll('form[data-export-reload]').forEach((form) => {
+    form.addEventListener('submit', () => {
+      // Give the download request time to start, then reload
+      // so the UI reflects any purge action.
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 2500);
+    });
+  });
+
   // Prevent row-level click handlers when interacting with inner controls
   document.querySelectorAll('[data-stop-row-click]').forEach((el) => {
     el.addEventListener('click', (event) => event.stopPropagation());
@@ -147,15 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (event) => {
       const clientName = form.dataset.clientName || '—';
       const ok = window.confirm(`¿Estas seguro de que quiere borrar el turno de ${clientName}?`);
-      if (!ok) event.preventDefault();
-    });
-  });
-
-  // Confirm before deleting payments
-  document.querySelectorAll('form[data-confirm-delete-payment]').forEach((form) => {
-    form.addEventListener('submit', (event) => {
-      const clientName = form.dataset.clientName || '—';
-      const ok = window.confirm(`¿Estas seguro de que quiere eliminar el pago de ${clientName}?`);
       if (!ok) event.preventDefault();
     });
   });
@@ -191,6 +235,60 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modal.dataset.openOnLoad === '1') open();
 
     return { modal, open, close };
+  };
+
+  const wireExpenseEditModal = () => {
+    const api = wireModal({ modalId: 'expenseEditModal' });
+    if (!api) return;
+
+    const form = document.getElementById('expenseEditForm');
+    const subtitle = document.getElementById('expenseEditSubtitle');
+    const amountDue = document.getElementById('expenseEditAmountDue');
+    const amountPaid = document.getElementById('expenseEditAmountPaid');
+    const expenseIdInput = document.getElementById('expenseEditId');
+    const monthInput = document.getElementById('expenseEditMonth');
+    const qInput = document.getElementById('expenseEditQ');
+
+    if (!form || !amountDue || !amountPaid) return;
+
+    const actionTemplate = form.dataset.actionTemplate;
+
+    // If the modal is opened due to validation errors, ensure the action matches the expense id.
+    if (expenseIdInput && expenseIdInput.value && actionTemplate) {
+      form.setAttribute('action', actionTemplate.replace('__ID__', String(expenseIdInput.value)));
+      if (subtitle && !subtitle.textContent.trim()) {
+        subtitle.textContent = `Editando expensa #${expenseIdInput.value}`;
+      }
+    }
+
+    document.querySelectorAll('[data-expense-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.expenseId;
+        if (!id || !actionTemplate) return;
+
+        form.setAttribute('action', actionTemplate.replace('__ID__', String(id)));
+        if (expenseIdInput) expenseIdInput.value = String(id);
+
+        const category = btn.dataset.expenseCategory || '';
+        const payee = btn.dataset.expensePayee || '';
+        const due = btn.dataset.expenseAmountDue || '';
+        const paid = btn.dataset.expenseAmountPaid || '';
+
+        if (subtitle) {
+          const label = [category, payee].filter(Boolean).join(' · ');
+          subtitle.textContent = label || '—';
+        }
+
+        amountDue.value = due;
+        amountPaid.value = paid;
+
+        // Keep current filters when returning to index.
+        if (monthInput) monthInput.value = monthInput.value || '';
+        if (qInput) qInput.value = qInput.value || '';
+
+        api.open();
+      });
+    });
   };
 
   const wireUserRoleStatusModals = () => {
@@ -301,6 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  wireExpenseEditModal();
+
   wireUserRoleStatusModals();
 
   // Appointment modal
@@ -373,6 +473,91 @@ document.addEventListener('DOMContentLoaded', () => {
       syncClientMode();
     }
   }
+
+  const wireServiceEditModal = () => {
+    const api = wireModal({ openButtonId: 'openServiceModal', modalId: 'serviceModal' });
+    if (!api) return;
+
+    const form = document.getElementById('serviceForm');
+    const titleEl = document.getElementById('serviceModalTitle');
+    const serviceIdInput = document.getElementById('serviceEditId');
+    const nameInput = document.getElementById('name');
+    const durationInput = document.getElementById('duration_minutes');
+    const priceInput = document.getElementById('price');
+    const isActiveCheckbox = form?.querySelector('input[type="checkbox"][name="is_active_new"]');
+    const createUrl = form?.dataset?.createUrl || '';
+
+    if (!form || !serviceIdInput || !nameInput || !durationInput || !priceInput) return;
+
+    const setPatchMethod = (enabled) => {
+      const existing = form.querySelector('input[name="_method"]');
+      if (enabled) {
+        if (!existing) {
+          const methodInput = document.createElement('input');
+          methodInput.type = 'hidden';
+          methodInput.name = '_method';
+          methodInput.value = 'PATCH';
+          form.appendChild(methodInput);
+        } else {
+          existing.value = 'PATCH';
+        }
+      } else if (existing) {
+        existing.remove();
+      }
+    };
+
+    const resetToCreate = () => {
+      if (titleEl) titleEl.textContent = 'Nuevo servicio';
+      form.setAttribute('action', createUrl || form.getAttribute('action') || '');
+      setPatchMethod(false);
+      serviceIdInput.value = '';
+      nameInput.value = '';
+      durationInput.value = '';
+      priceInput.value = '';
+      if (isActiveCheckbox) isActiveCheckbox.checked = true;
+    };
+
+    const openEdit = (btn) => {
+      const id = btn.dataset.serviceId;
+      const updateUrl = btn.dataset.serviceUpdateUrl;
+      if (!id || !updateUrl) return;
+
+      if (titleEl) titleEl.textContent = 'Editar servicio';
+      form.setAttribute('action', updateUrl);
+      setPatchMethod(true);
+
+      serviceIdInput.value = String(id);
+      nameInput.value = btn.dataset.serviceName || '';
+      durationInput.value = btn.dataset.serviceDurationMinutes || '';
+
+      const priceCents = parseInt(btn.dataset.servicePriceCents || '0', 10);
+      priceInput.value = (priceCents / 100).toFixed(2);
+
+      if (isActiveCheckbox) {
+        isActiveCheckbox.checked = (btn.dataset.serviceIsActive || '0') === '1';
+      }
+
+      api.open();
+    };
+
+    const openButton = document.getElementById('openServiceModal');
+    if (openButton) {
+      openButton.addEventListener('click', () => {
+        resetToCreate();
+      });
+    }
+
+    // If modal opened due to validation errors while editing, keep the title coherent.
+    if (api.modal?.dataset?.openOnLoad === '1' && serviceIdInput.value) {
+      if (titleEl) titleEl.textContent = 'Editar servicio';
+    }
+
+    document.querySelectorAll('[data-service-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => openEdit(btn));
+    });
+  };
+
+  wireServiceEditModal();
 
   // Appointment edit modal (click row)
   const wireAppointmentEditModal = () => {
@@ -488,7 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Payments modal
   const paymentModalApi = wireModal({ openButtonId: 'openPaymentModal', modalId: 'paymentModal' });
-  const paymentEditModalApi = wireModal({ modalId: 'paymentEditModal' });
   wireModal({ openButtonId: 'openExpenseModal', modalId: 'expenseModal' });
   if (paymentModalApi) {
     const modalEl = paymentModalApi.modal;
@@ -542,45 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appointmentSelect) {
       appointmentSelect.addEventListener('change', syncFromAppointment);
       syncFromAppointment();
-    }
-  }
-
-  // Payments edit modal
-  if (paymentEditModalApi) {
-    const modalEl = paymentEditModalApi.modal;
-    const form = modalEl.querySelector('#paymentEditForm');
-    const subtitleEl = modalEl.querySelector('#paymentEditSubtitle');
-    const editIdInput = modalEl.querySelector('#paymentEditId');
-    const amountInput = modalEl.querySelector('#paymentEditAmount');
-
-    if (form && subtitleEl && editIdInput && amountInput) {
-      if (paymentEditModalApi.modal?.dataset?.openOnLoad === '1') {
-        const id = editIdInput.value;
-        if (id) {
-          const template = form.dataset.actionTemplate || '';
-          form.action = template.replace('__ID__', id);
-          subtitleEl.textContent = `ID: ${id}`;
-        }
-      }
-
-      document.querySelectorAll('[data-payment-edit-button]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.paymentId;
-          if (!id) return;
-
-          const clientName = btn.dataset.clientName || '—';
-          const amount = btn.dataset.paymentAmount || '';
-
-          editIdInput.value = id;
-          amountInput.value = amount;
-          subtitleEl.textContent = `ID: ${id} — ${clientName}`;
-
-          const template = form.dataset.actionTemplate || '';
-          form.action = template.replace('__ID__', id);
-
-          paymentEditModalApi.open();
-        });
-      });
     }
   }
 

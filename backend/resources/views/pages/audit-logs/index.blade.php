@@ -8,6 +8,49 @@
             <h1 class="text-xl font-semibold tracking-tight">Auditoría</h1>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Historial de modificaciones realizadas por los usuarios.</p>
         </div>
+
+        <div class="sm:pt-1">
+            <details class="group">
+                <summary class="list-none">
+                    <span class="inline-flex cursor-pointer select-none items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                        Exportar
+                    </span>
+                </summary>
+
+                <div class="mt-3 w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+                    <div class="font-semibold">Antes de confirmar</div>
+                    <div class="mt-1 text-sm opacity-90">
+                        La exportación genera un ZIP con CSV (compatible con Excel).
+                    </div>
+
+                    <div class="mt-3 text-sm">
+                        Si confirmás, se van a borrar registros de:
+                        <span class="font-semibold">auditoría</span>, <span class="font-semibold">expensas</span> y <span class="font-semibold">turnos pagados</span>.
+                        <div class="mt-1 opacity-90">
+                            No se borran: clientes, usuarios, servicios, ni turnos programados o con pago parcial.
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                        <iframe name="auditExportFrame" class="hidden"></iframe>
+
+                        <form method="POST" target="auditExportFrame" data-export-reload action="{{ route('audit-logs.export', [], false) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900">
+                                Exportar sin borrar
+                            </button>
+                        </form>
+
+                        <form method="POST" target="auditExportFrame" data-export-reload action="{{ route('audit-logs.export-and-purge', [], false) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">
+                                Confirmar exportar y borrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </details>
+        </div>
     </div>
 
     <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
@@ -37,13 +80,13 @@
     <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div class="overflow-x-auto">
             <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead class="bg-slate-50 dark:bg-slate-900">
+                <thead class="bg-slate-900 dark:bg-slate-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Fecha</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Usuario</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Acción</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Entidad</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Detalle</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Fecha</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Usuario</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acción</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Entidad</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Detalle</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">

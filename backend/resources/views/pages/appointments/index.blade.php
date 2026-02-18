@@ -13,13 +13,11 @@
         </button>
     </div>
 
-    <div class="mt-4 text-sm text-slate-600 dark:text-slate-300">
-        @if (! empty($filters['week']) && $weekStart && $weekEnd)
+    @if (! empty($filters['week']) && $weekStart && $weekEnd)
+        <div class="mt-4 text-sm text-slate-600 dark:text-slate-300">
             Semana: <span class="font-semibold text-slate-900 dark:text-slate-100">{{ $weekStart->isoFormat('D MMM') }} – {{ $weekEnd->isoFormat('D MMM YYYY') }}</span>
-        @else
-            Mostrando: <span class="font-semibold text-slate-900 dark:text-slate-100">Todos los turnos</span>
-        @endif
-    </div>
+        </div>
+    @endif
 
     @if ($errors->any() && old('_form') === 'appointment_delete')
         <div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
@@ -83,14 +81,15 @@
     <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div class="overflow-x-auto">
             <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead class="bg-slate-50 dark:bg-slate-900">
+                <thead class="bg-slate-900 dark:bg-slate-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Inicio</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Cliente</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Servicio</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Profesional</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Estado</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Acciones</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Inicio</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Cliente</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Servicio</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Monto</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Profesional</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Estado</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -104,19 +103,16 @@
                             </td>
                             <td class="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ $appt->client?->full_name ?? '—' }}</td>
                             <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">{{ $appt->service?->name ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap tabular-nums">
+                                $ {{ number_format(((int) ($appt->price_cents ?? 0)) / 100, 2, ',', '.') }}
+                            </td>
                             <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">{{ $appt->user?->first_name ?? '' }} {{ $appt->user?->last_name ?? '' }}</td>
-                            <td class="px-4 py-3">
-                                <span class="text-xs rounded-full px-2 py-1 font-semibold {{ $appt->ui_status_class ?? 'bg-slate-100 text-slate-700' }}">
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center justify-center whitespace-nowrap text-xs rounded-full px-2 py-1 font-semibold {{ $appt->ui_status_class ?? 'bg-slate-100 text-slate-700' }}">
                                     {{ $appt->ui_status_label ?? '—' }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                @php
-                                    $paidCents = (int) ($appt->paid_cents_sum ?? 0);
-                                    $depositCents = (int) ($appt->deposit_cents ?? 0);
-                                    $canDelete = $paidCents === 0 && $depositCents === 0;
-                                @endphp
-
                                 <div class="inline-flex items-center justify-end gap-2" data-stop-row-click>
                                     <button
                                         type="button"
@@ -148,9 +144,8 @@
 
                                         <button
                                             type="submit"
-                                            class="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold dark:border-red-900/50 dark:bg-slate-950 {{ $canDelete ? 'text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30' : 'text-slate-400 cursor-not-allowed dark:text-slate-500' }}"
-                                            @disabled(! $canDelete)
-                                            title="{{ $canDelete ? 'Borrar turno' : 'No se puede borrar si tiene pagos o anticipo' }}"
+                                            class="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950/30"
+                                            title="Borrar turno"
                                         >
                                             Borrar
                                         </button>
@@ -160,7 +155,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-500">No hay turnos con esos filtros.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-slate-500">No hay turnos con esos filtros.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -189,9 +184,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo turno</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">Completá los datos y confirmá.</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form method="post" action="{{ route('appointments.store', [], false) }}" class="px-5 py-4" id="appointmentForm">
@@ -235,7 +228,7 @@
                                 @endforeach
                             </select>
 
-                            <div class="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
+                            <div class="mt-2 flex flex-wrap gap-3 text-sm text-slate-600 dark:text-slate-300">
                                 <div>Duración: <span id="appointmentServiceDuration" class="font-semibold text-slate-900 dark:text-slate-100">—</span></div>
                                 <div>Precio: <span id="appointmentServicePrice" class="font-semibold text-slate-900 dark:text-slate-100">—</span></div>
                                 <div>Fin estimado: <span id="appointmentEndTime" class="font-semibold text-slate-900 dark:text-slate-100">—</span></div>
@@ -243,31 +236,32 @@
                         </div>
 
                         <div>
-                            <label for="start_date" class="block text-sm font-semibold text-slate-700">Fecha</label>
+                            <label for="start_date" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Fecha</label>
                             <input
                                 id="start_date"
                                 name="start_date"
                                 type="date"
                                 required
+                                min="{{ now()->toDateString() }}"
                                 value="{{ old('start_date') }}"
-                                class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                             />
                         </div>
 
                         <div>
-                            <label for="start_time" class="block text-sm font-semibold text-slate-700">Hora</label>
+                            <label for="start_time" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Hora</label>
                             <input
                                 id="start_time"
                                 name="start_time"
                                 type="time"
                                 required
                                 value="{{ old('start_time') }}"
-                                class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                             />
                         </div>
 
                         <div>
-                            <label for="deposit" class="block text-sm font-semibold text-slate-700">Anticipo (opcional)</label>
+                            <label for="deposit" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Anticipo (opcional)</label>
                             <input
                                 id="deposit"
                                 name="deposit"
@@ -275,14 +269,29 @@
                                 min="0"
                                 step="0.01"
                                 value="{{ old('deposit') }}"
-                                class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                 placeholder="0,00"
                             />
-                            <p class="mt-1 text-xs text-slate-500">Se descuenta del precio al sumar la deuda del cliente.</p>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Se descuenta del precio al sumar la deuda del cliente.</p>
+                        </div>
+
+                        <div>
+                            <label for="discount_percent" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Descuento (%)</label>
+                            <select
+                                id="discount_percent"
+                                name="discount_percent"
+                                class="mt-1 w-full rounded-lg border border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
+                            >
+                                @for ($percent = 0; $percent <= 100; $percent += 5)
+                                    <option value="{{ $percent }}" @selected((int) old('discount_percent', 0) === $percent)>
+                                        {{ $percent }}%
+                                    </option>
+                                @endfor
+                            </select>
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="client_id" class="block text-sm font-semibold text-slate-700">Cliente</label>
+                            <label for="client_id" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Cliente</label>
                             <select
                                 id="client_id"
                                 name="client_id"
@@ -296,73 +305,73 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="mt-1 text-xs text-slate-500">Si el cliente no existe, dejalo en “Nuevo cliente” y completá los datos.</p>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Si el cliente no existe, dejalo en “Nuevo cliente” y completá los datos.</p>
                         </div>
 
                         <div id="newClientFields" class="sm:col-span-2">
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label for="client_first_name" class="block text-sm font-semibold text-slate-700">Nombre</label>
+                                    <label for="client_first_name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Nombre</label>
                                     <input
                                         id="client_first_name"
                                         name="client_first_name"
                                         value="{{ old('client_first_name') }}"
-                                        class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                        class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                     />
                                 </div>
                                 <div>
-                                    <label for="client_last_name" class="block text-sm font-semibold text-slate-700">Apellido</label>
+                                    <label for="client_last_name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Apellido</label>
                                     <input
                                         id="client_last_name"
                                         name="client_last_name"
                                         value="{{ old('client_last_name') }}"
-                                        class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                        class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                     />
                                 </div>
                                 <div>
-                                    <label for="client_phone" class="block text-sm font-semibold text-slate-700">Teléfono</label>
+                                    <label for="client_phone" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Teléfono</label>
                                     <input
                                         id="client_phone"
                                         name="client_phone"
                                         value="{{ old('client_phone') }}"
-                                        class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                        class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                     />
                                 </div>
                                 <div>
-                                    <label for="client_email" class="block text-sm font-semibold text-slate-700">Email (opcional)</label>
+                                    <label for="client_email" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email (opcional)</label>
                                     <input
                                         id="client_email"
                                         name="client_email"
                                         type="email"
                                         value="{{ old('client_email') }}"
-                                        class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                        class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                     />
                                 </div>
                                 <div>
-                                    <label for="client_dni" class="block text-sm font-semibold text-slate-700">DNI (opcional)</label>
+                                    <label for="client_dni" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">DNI (opcional)</label>
                                     <input
                                         id="client_dni"
                                         name="client_dni"
                                         value="{{ old('client_dni') }}"
-                                        class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                        class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                     />
                                 </div>
                             </div>
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="notes" class="block text-sm font-semibold text-slate-700">Notas (opcional)</label>
+                            <label for="notes" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Notas (opcional)</label>
                             <textarea
                                 id="notes"
                                 name="notes"
                                 rows="3"
-                                class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                             >{{ old('notes') }}</textarea>
                         </div>
                     </div>
 
-                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>
+                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900" data-modal-close>
                             Cancelar
                         </button>
                         <button type="submit" class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
@@ -383,15 +392,13 @@
         <div class="absolute inset-0 bg-slate-900/50" data-modal-overlay></div>
 
         <div class="relative mx-auto flex min-h-full max-w-2xl items-start justify-center p-4 sm:items-center">
-            <div class="w-full max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl bg-white shadow-xl">
-                <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+            <div class="w-full max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-slate-950">
+                <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
                     <div>
-                        <div class="text-lg font-semibold text-slate-900">Editar turno</div>
-                        <div class="mt-1 text-sm text-slate-500" id="appointmentEditSubtitle">—</div>
+                        <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Editar turno</div>
+                        <div class="mt-1 text-sm text-slate-500 dark:text-slate-400" id="appointmentEditSubtitle">—</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form id="appointmentEditForm" method="post" action="" data-action-template="{{ route('appointments.index', [], false) }}/__ID__" class="px-5 py-4">
@@ -428,12 +435,12 @@
 
                         <div>
                             <label for="edit_start_date" class="block text-sm font-semibold text-slate-700">Fecha</label>
-                            <input id="edit_start_date" name="start_date" type="date" required value="{{ old('_form') === 'appointment_edit' ? old('start_date') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <input id="edit_start_date" name="start_date" type="date" required min="{{ now()->toDateString() }}" value="{{ old('_form') === 'appointment_edit' ? old('start_date') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
                         <div>
                             <label for="edit_start_time" class="block text-sm font-semibold text-slate-700">Hora</label>
-                            <input id="edit_start_time" name="start_time" type="time" required value="{{ old('_form') === 'appointment_edit' ? old('start_time') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <input id="edit_start_time" name="start_time" type="time" required value="{{ old('_form') === 'appointment_edit' ? old('start_time') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
                         <div>
@@ -445,7 +452,7 @@
                                 min="0"
                                 step="0.01"
                                 value="{{ old('_form') === 'appointment_edit' ? old('deposit') : '' }}"
-                                class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
+                                class="mt-1 w-full rounded-lg border-slate-300 bg-white focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200"
                                 placeholder="0,00"
                             />
                         </div>
@@ -475,8 +482,8 @@
                         </div>
                     </div>
 
-                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>
+                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900" data-modal-close>
                             Cancelar
                         </button>
                         <button type="submit" class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">

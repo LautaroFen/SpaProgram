@@ -8,7 +8,10 @@
     <title>@yield('title', config('app.name'))</title>
 
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/LogoPWA.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -48,8 +51,13 @@
                     </button>
 
                     <a href="{{ route('dashboard', [], false) }}" class="flex items-center gap-2 font-semibold tracking-tight">
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-                            <span class="text-sm font-bold">DO</span>
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white dark:bg-slate-950">
+                            <img
+                                src="{{ asset('images/logo.png') }}"
+                                alt=""
+                                class="h-10 w-10 object-contain"
+                                aria-hidden="true"
+                            />
                         </span>
                         <span class="hidden sm:inline">DayOff</span>
                     </a>
@@ -64,10 +72,21 @@
                         <button
                             type="button"
                             data-theme-toggle
-                            class="hidden sm:inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+                            class="inline-flex items-center justify-center rounded-md bg-white p-2 text-slate-700 hover:bg-slate-50 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
                             aria-pressed="false"
                         >
-                            Modo oscuro
+                            <img
+                                src="{{ asset('images/modo-oscuro.png') }}"
+                                alt=""
+                                class="h-6 w-6 dark:hidden"
+                                aria-hidden="true"
+                            />
+                            <img
+                                src="{{ asset('images/modo-claro.png') }}"
+                                alt=""
+                                class="hidden h-6 w-6 dark:inline-block"
+                                aria-hidden="true"
+                            />
                         </button>
 
                         <form method="POST" action="{{ route('logout', [], false) }}">
@@ -81,7 +100,7 @@
             </div>
 
             <div id="mobileMenu" class="md:hidden hidden pb-3">
-                <nav class="grid gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <nav class="grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
                     @php
                         $authUser = auth()->user();
                         $isAdmin = $authUser?->isAdmin() ?? false;
@@ -199,7 +218,7 @@
         </div>
     </header>
 
-    <aside class="hidden md:block fixed inset-y-0 left-0 w-60 bg-white pt-14 z-20 dark:bg-slate-950">
+    <aside class="hidden md:block fixed inset-y-0 left-0 w-60 bg-slate-50 pt-14 z-20 dark:bg-slate-900/40">
         <div class="h-full overflow-y-auto">
             <div class="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Menú</div>
             <nav class="flex flex-col items-center gap-1 px-3">

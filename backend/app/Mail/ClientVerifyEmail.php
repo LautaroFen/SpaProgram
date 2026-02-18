@@ -29,7 +29,7 @@ class ClientVerifyEmail extends Mailable
 
     public function content(): Content
     {
-        $url = URL::temporarySignedRoute(
+        $relativeUrl = URL::temporarySignedRoute(
             'clients.email.verify',
             now()->addDays(3),
             array_filter([
@@ -37,12 +37,16 @@ class ClientVerifyEmail extends Mailable
                 'eh' => $this->client->emailVerificationHash(),
                 'appointment' => $this->appointmentId,
             ], fn ($v) => $v !== null)
+            ,
+            absolute: false,
         );
 
-        $logoSrc = asset('images/LogoNegro.jpeg');
-        $logoPath = public_path('images/LogoNegro.jpeg');
+        $url = url($relativeUrl);
+
+        $logoSrc = asset('images/LogoEmail.jpeg');
+        $logoPath = public_path('images/LogoEmail.jpeg');
         if (is_string($logoPath) && is_file($logoPath)) {
-            $cid = 'logonegro';
+            $cid = 'logoemail';
             $logoSrc = 'cid:'.$cid;
 
             $this->withSymfonyMessage(function (Email $message) use ($logoPath, $cid) {

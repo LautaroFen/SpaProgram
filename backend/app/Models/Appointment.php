@@ -16,6 +16,7 @@ class Appointment extends Model
         'start_at',
         'end_at',
         'price_cents',
+        'discount_percent',
         'deposit_cents',
         'client_balance_before_cents',
         'status',
@@ -26,6 +27,7 @@ class Appointment extends Model
         'start_at' => 'datetime',
         'end_at' => 'datetime',
         'price_cents' => 'integer',
+        'discount_percent' => 'integer',
         'deposit_cents' => 'integer',
         'client_balance_before_cents' => 'integer',
     ];

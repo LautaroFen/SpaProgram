@@ -18,7 +18,7 @@ class StoreRequest extends FormRequest
 
             'service_id' => ['required', 'integer', 'exists:services,id'],
 
-            'start_date' => ['required', 'date'],
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
 
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
@@ -31,11 +31,13 @@ class StoreRequest extends FormRequest
 
             'deposit' => ['nullable', 'numeric', 'min:0'],
 
+            'discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
+
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
-    /** @return array{week:?string,service_id:int,start_date:string,start_time:string,client_id:?int,client_first_name:?string,client_last_name:?string,client_phone:?string,client_email:?string,client_dni:?string,deposit_cents:int,notes:?string} */
+    /** @return array{week:?string,service_id:int,start_date:string,start_time:string,client_id:?int,client_first_name:?string,client_last_name:?string,client_phone:?string,client_email:?string,client_dni:?string,deposit_cents:int,discount_percent:int,notes:?string} */
     public function payload(): array
     {
         $validated = $this->validated();
@@ -52,6 +54,7 @@ class StoreRequest extends FormRequest
             'client_email' => isset($validated['client_email']) ? trim((string) $validated['client_email']) : null,
             'client_dni' => isset($validated['client_dni']) ? trim((string) $validated['client_dni']) : null,
             'deposit_cents' => (int) round(((float) ($validated['deposit'] ?? 0)) * 100),
+            'discount_percent' => (int) ($validated['discount_percent'] ?? 0),
             'notes' => isset($validated['notes']) ? trim((string) $validated['notes']) : null,
         ];
     }

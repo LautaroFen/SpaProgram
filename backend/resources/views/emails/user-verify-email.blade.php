@@ -6,82 +6,104 @@
     $displayName = trim((string) ($user->first_name.' '.$user->last_name));
 @endphp
 
-<div style="margin:0;padding:0;background:#000000;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<div style="margin:0;padding:0;background-color:#000000;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#000000;padding:26px 12px;">
+        <tr>
+            <td align="center">
 
-  <!-- outer full width wrapper -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background:#000000;">
-    <tr>
-      <td align="center" style="padding:28px 12px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                    style="width:100%;max-width:520px;background:#000000;border:1px solid #D4AF37;border-radius:16px;overflow:hidden;">
 
-        <!-- Fluid card: grows on desktop, never overflows on mobile -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
-               align="center"
-               style="width:100%;max-width:520px;background:#000000;border:1px solid #D4AF37;border-radius:16px;overflow:hidden;">
+                    <tr>
+                        <td align="center" style="padding:32px 24px 10px 24px;">
+                            <img
+                                src="{{ $logoSrc ?: asset('images/LogoEmail.jpeg') }}"
+                                alt="Logo"
+                                width="140"
+                                style="display:block;width:140px;max-width:100%;height:auto;"
+                            />
+                        </td>
+                    </tr>
 
-          <tr>
-            <td style="padding:32px 24px;box-sizing:border-box;color:#FFFFFF;">
+                    <tr>
+                        <td align="center" style="padding:10px 24px 0 24px;font-family:Arial,Helvetica,sans-serif;color:#FFFFFF;">
+                            <h2 style="margin:0;font-size:20px;font-weight:700;">
+                                Confirmá tu correo electrónico
+                            </h2>
+                        </td>
+                    </tr>
 
-              <!-- Logo -->
-              <table width="100%" role="presentation" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;">
-                <tr>
-                  <td align="center" style="padding-bottom:18px;">
-                    <img src="{{ $logoSrc ?: asset('images/LogoNegro.jpeg') }}"
-                         alt="Logo"
-                      width="140"
-                      style="display:block;border:0;outline:none;text-decoration:none;width:140px;height:auto;max-width:100%;" />
-                  </td>
-                </tr>
-              </table>
+                    <tr>
+                        <td style="padding:18px 24px 0 24px;font-family:Arial,Helvetica,sans-serif;color:#FFFFFF;">
+                            <p style="margin:0;font-size:15px;line-height:24px;">
+                                Hola <strong>{{ $displayName !== '' ? e($displayName) : '—' }}</strong>,
+                            </p>
+                        </td>
+                    </tr>
 
-              <!-- Título -->
-              <div style="text-align:center;font-size:20px;font-weight:700;line-height:1.3;margin-bottom:14px;word-break:break-word;overflow-wrap:break-word;white-space:normal;">
-                Confirmá tu correo
-              </div>
+                    <tr>
+                        <td style="padding:12px 24px 0 24px;font-family:Arial,Helvetica,sans-serif;color:#EAEAEA;">
+                            <p style="margin:0;font-size:14px;line-height:22px;">
+                                Recibiste este correo porque necesitamos confirmar tu dirección de email
+                                para que puedas gestionar tus turnos y recibir notificaciones del sistema.
+                            </p>
+                        </td>
+                    </tr>
 
-              <!-- Saludo -->
-              <div style="font-size:15px;color:#FFFFFF;margin-bottom:12px;line-height:1.55;word-break:break-word;overflow-wrap:break-word;white-space:normal;">
-                Hola <strong>{{ $displayName !== '' ? e($displayName) : '—' }}</strong>,
-              </div>
+                    <tr>
+                        <td align="center" style="padding:26px 24px 18px 24px;">
+                            <a href="{{ $verifyUrl }}"
+                               target="_blank"
+                               rel="noopener"
+                               style="display:inline-block;
+                                      background-color:#D4AF37;
+                                      color:#000000;
+                                      text-decoration:none;
+                                      padding:14px 20px;
+                                      border-radius:12px;
+                                      font-family:Arial,Helvetica,sans-serif;
+                                      font-size:15px;
+                                      font-weight:bold;">
+                                Verificar mi correo
+                            </a>
+                        </td>
+                    </tr>
 
-              <!-- Mensaje -->
-              <div style="font-size:14px;color:#D6D6D6;margin-bottom:22px;line-height:1.65;word-break:break-word;overflow-wrap:break-word;white-space:normal;">
-                Necesitamos verificar tu email para que puedas gestionar turnos y recibir recordatorios.
-              </div>
+                    <tr>
+                        <td style="padding:0 24px 18px 24px;font-family:Arial,Helvetica,sans-serif;color:#BBBBBB;">
+                            <p style="margin:0;font-size:12px;line-height:18px;">
+                                Si el botón no funciona, copiá y pegá este enlace en tu navegador:
+                            </p>
 
-              <!-- BOTÓN (full width dentro del card) -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:18px;">
-                <tr>
-                  <td align="center">
-                    <a href="{{ $verifyUrl }}" target="_blank" rel="noopener noreferrer"
-                        style="display:inline-block;width:100%;max-width:360px;text-align:center;padding:14px 18px;background:#D4AF37;color:#000000;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;line-height:1.2;">
-                      Verificar correo
-                    </a>
-                  </td>
-                </tr>
-              </table>
+                            <p style="margin:6px 0 0 0;font-size:12px;word-break:break-all;overflow-wrap:anywhere;">
+                                <a href="{{ $verifyUrl }}" target="_blank" rel="noopener" style="color:#D4AF37;text-decoration:underline;word-break:break-all;overflow-wrap:anywhere;">
+                                    {{ $verifyUrl }}
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
 
-              <!-- LINK DE RESPALDO: no mostramos la URL completa.
-                   Mostramos texto corto que apunta a la URL real. -->
-              <div style="font-size:12px;color:#9E9E9E;line-height:1.45;word-break:break-word;overflow-wrap:break-word;white-space:normal;">
-                Si el botón no funciona, tocá este enlace:
-                <div style="margin-top:8px;text-align:center;">
-                  <a href="{{ $verifyUrl }}" target="_blank" rel="noopener noreferrer"
-                     style="color:#D4AF37;font-size:13px;text-decoration:underline;word-break:break-all;overflow-wrap:anywhere;">
-                    Copiar enlace de verificación
-                  </a>
-                </div>
-              </div>
+                    <tr>
+                        <td style="padding:0 24px;">
+                            <hr style="border:none;border-top:1px solid #333333;">
+                        </td>
+                    </tr>
 
-              <!-- Small footer -->
-              <div style="font-size:10px;color:#777777;text-align:center;margin-top:20px;line-height:1.4;">
-                Si no solicitaste esto, ignorá el mensaje.<br>© {{ date('Y') }}
-              </div>
+                    <tr>
+                        <td style="padding:18px 24px 28px 24px;font-family:Arial,Helvetica,sans-serif;color:#9A9A9A;text-align:center;">
+                            <p style="margin:0;font-size:12px;line-height:18px;">
+                                Si no solicitaste esta verificación, podés ignorar este mensaje.
+                            </p>
+
+                            <p style="margin:12px 0 0 0;font-size:11px;opacity:0.8;">
+                                © {{ date('Y') }} Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
 
             </td>
-          </tr>
-        </table>
-
-      </td>
-    </tr>
-  </table>
+        </tr>
+    </table>
 </div>

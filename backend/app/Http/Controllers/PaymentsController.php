@@ -35,6 +35,9 @@ class PaymentsController extends Controller
             ->withSum(['payments as paid_cents_sum' => function ($q) {
                 $q->whereIn('status', ['paid', 'partial']);
             }], 'amount_cents')
+            ->whereDoesntHave('payments', function ($q) {
+                $q->whereIn('status', ['paid', 'partial']);
+            })
             ->whereIn('status', ['scheduled', 'paid'])
             ->orderByDesc('start_at')
             ->limit(200)
@@ -95,6 +98,17 @@ class PaymentsController extends Controller
                         $q->whereIn('status', ['paid', 'partial']);
                     }], 'amount_cents')
                     ->findOrFail($appointmentId);
+
+                $alreadyHasPayment = Payment::query()
+                    ->where('appointment_id', $appointmentId)
+                    ->whereIn('status', ['paid', 'partial'])
+                    ->exists();
+
+                if ($alreadyHasPayment) {
+                    throw ValidationException::withMessages([
+                        'appointment_id' => 'Este turno ya tiene un pago registrado. No se puede crear otro pago para el mismo turno.',
+                    ]);
+                }
 
                 if ((int) $appointment->client_id !== (int) $clientId) {
                     throw ValidationException::withMessages([
@@ -169,6 +183,104 @@ class PaymentsController extends Controller
                         ]);
                     }
                 }
+            }
+        });
+
+        return redirect()->to(route('payments.index', [], false));
+    }
+
+    public function complete(Payment $payment)
+    {
+        DB::transaction(function () use ($payment) {
+            $lockedPayment = Payment::query()->lockForUpdate()->findOrFail((int) $payment->id);
+
+            if ((string) $lockedPayment->status !== 'partial') {
+                return;
+            }
+
+            $clientId = (int) $lockedPayment->client_id;
+            $appointmentId = $lockedPayment->appointment_id ? (int) $lockedPayment->appointment_id : null;
+
+            if ($appointmentId === null) {
+                throw ValidationException::withMessages([
+                    'appointment_id' => 'Este pago parcial no está asociado a un turno.',
+                ]);
+            }
+
+            $appointment = Appointment::query()->lockForUpdate()->find($appointmentId);
+            if (! $appointment) {
+                throw ValidationException::withMessages([
+                    'appointment_id' => 'El turno asociado a este pago no existe. No se puede completar.',
+                ]);
+            }
+
+            $dueCents = max(0, ((int) $appointment->price_cents) - ((int) $appointment->deposit_cents));
+            $paidOthersCents = (int) Payment::query()
+                ->where('appointment_id', $appointmentId)
+                ->whereIn('status', ['paid', 'partial'])
+                ->where('id', '!=', (int) $lockedPayment->id)
+                ->sum('amount_cents');
+
+            $remainingBeforeCents = max(0, $dueCents - $paidOthersCents);
+
+            if ($remainingBeforeCents <= 0) {
+                return;
+            }
+
+            $oldAmountCents = (int) $lockedPayment->amount_cents;
+            $oldStatus = (string) $lockedPayment->status;
+            $newAmountCents = (int) $remainingBeforeCents;
+            $newStatus = 'paid';
+
+            $oldAffectsBalance = in_array($oldStatus, ['partial', 'paid'], true);
+            $newAffectsBalance = in_array($newStatus, ['partial', 'paid'], true);
+
+            $lockedPayment->update([
+                'amount_cents' => $newAmountCents,
+                'status' => $newStatus,
+            ]);
+
+            AuditLog::record('payment.update', Payment::class, (int) $lockedPayment->id, [
+                'summary' => 'Completar pago parcial',
+                'client_id' => $clientId,
+                'appointment_id' => $appointmentId,
+                'from_amount' => number_format($oldAmountCents / 100, 2, ',', '.'),
+                'to_amount' => number_format($newAmountCents / 100, 2, ',', '.'),
+                'from_status' => $oldStatus,
+                'to_status' => $newStatus,
+            ]);
+
+            $client = Client::query()->lockForUpdate()->findOrFail($clientId);
+            $balance = (int) $client->balance_cents;
+            if ($oldAffectsBalance) {
+                $balance += $oldAmountCents;
+            }
+            if ($newAffectsBalance) {
+                $balance -= $newAmountCents;
+            }
+            $client->update(['balance_cents' => max(0, $balance)]);
+
+            $paidNowCents = $paidOthersCents + ($newAffectsBalance ? $newAmountCents : 0);
+            $remainingAfter = max(0, $dueCents - $paidNowCents);
+
+            $from = (string) $appointment->status;
+            $to = null;
+
+            if ($remainingAfter === 0 && $appointment->status !== 'cancelled' && $appointment->status !== 'no_show') {
+                $to = 'paid';
+                $appointment->update(['status' => $to]);
+            } elseif ($remainingAfter > 0 && $appointment->status === 'paid') {
+                $to = 'scheduled';
+                $appointment->update(['status' => $to]);
+            }
+
+            if ($to !== null && $to !== $from) {
+                AuditLog::record('appointment.status_change', Appointment::class, (int) $appointment->id, [
+                    'summary' => 'Cambio de estado de turno por completar pago',
+                    'from' => $from,
+                    'to' => $to,
+                    'payment_id' => (int) $lockedPayment->id,
+                ]);
             }
         });
 

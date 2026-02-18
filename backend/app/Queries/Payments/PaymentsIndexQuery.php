@@ -5,6 +5,7 @@ namespace App\Queries\Payments;
 use App\Models\Payment;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PaymentsIndexQuery
 {
@@ -12,7 +13,14 @@ class PaymentsIndexQuery
     public function build(array $filters): Builder
     {
         /** @var Builder $query */
-        $query = Payment::query()->with(['client', 'appointment']);
+        $query = Payment::query()->with([
+            'client',
+            'appointment' => function (BelongsTo $appointment) {
+                $appointment->withSum(['payments as paid_cents_sum' => function (Builder $p) {
+                    $p->whereIn('status', ['paid', 'partial']);
+                }], 'amount_cents');
+            },
+        ]);
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);

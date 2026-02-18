@@ -13,6 +13,10 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 /* Make the UI feel less "tiny" on large displays */
 @media (min-width: 1024px) {
     html {
@@ -21,6 +25,11 @@
 }
 
 /* Dark mode: scrollbar + form text */
+html ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
 html.dark {
     scrollbar-color: rgb(71 85 105) rgb(2 6 23);
     scrollbar-width: thin;
@@ -52,8 +61,36 @@ html.dark textarea {
     color-scheme: dark;
 }
 
+/* Modals: make form controls clearly visible (light + dark) */
+.fixed.inset-0.z-50[data-open-on-load] input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']),
+.fixed.inset-0.z-50[data-open-on-load] select,
+.fixed.inset-0.z-50[data-open-on-load] textarea {
+    @apply rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-1 text-sm leading-5 text-slate-900 placeholder:text-slate-400;
+}
+
+html.dark .fixed.inset-0.z-50[data-open-on-load] input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']),
+html.dark .fixed.inset-0.z-50[data-open-on-load] select,
+html.dark .fixed.inset-0.z-50[data-open-on-load] textarea {
+    @apply border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500;
+}
+
+.fixed.inset-0.z-50[data-open-on-load] input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']),
+.fixed.inset-0.z-50[data-open-on-load] select {
+    @apply min-h-9;
+}
+
 /* Tables: highlight the full row on hover (all cells) */
 .table-grid tbody tr {
+    @apply cursor-default;
+}
+
+/* In tables, keep pointer cursor only on interactive elements */
+.table-grid a,
+.table-grid button,
+.table-grid [role='button'],
+.table-grid input,
+.table-grid select,
+.table-grid textarea {
     @apply cursor-pointer;
 }
 

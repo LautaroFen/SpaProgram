@@ -39,12 +39,13 @@
     <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div class="overflow-x-auto">
             <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead class="bg-slate-50 dark:bg-slate-900">
+                <thead class="bg-slate-900 dark:bg-slate-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nombre</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Duración</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Precio</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Activo</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Nombre</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Duración</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Precio</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Estado</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -56,16 +57,37 @@
                             <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
                                 {{ $service->duration_minutes }} min
                             </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <td class="px-4 py-3 text-center text-sm font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap tabular-nums">
                                 $ {{ number_format(($service->price_cents ?? 0) / 100, 2, ',', '.') }}
                             </td>
-                            <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
-                                {{ $service->is_active ? 'Sí' : 'No' }}
+                            <td class="px-4 py-3">
+                                <span @class([
+                                    'inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 text-xs font-semibold',
+                                    'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200' => $service->is_active,
+                                    'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300' => ! $service->is_active,
+                                ])>
+                                    {{ $service->is_active ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <button
+                                    type="button"
+                                    data-service-edit
+                                    data-service-id="{{ $service->id }}"
+                                    data-service-name="{{ $service->name }}"
+                                    data-service-duration-minutes="{{ $service->duration_minutes }}"
+                                    data-service-price-cents="{{ $service->price_cents ?? 0 }}"
+                                    data-service-is-active="{{ $service->is_active ? '1' : '0' }}"
+                                    data-service-update-url="{{ route('services.update', ['service' => $service->id], false) }}"
+                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+                                >
+                                    Editar
+                                </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No hay servicios para mostrar.</td>
+                            <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No hay servicios para mostrar.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -91,17 +113,28 @@
             <div class="w-full max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-slate-950">
                 <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
                     <div>
-                        <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo servicio</div>
-                        <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">Nombre, duración y precio.</div>
+                        <div id="serviceModalTitle" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            {{ (old('_form') === 'service' && old('service_id')) ? 'Editar servicio' : 'Nuevo servicio' }}
+                        </div>
+                        <div id="serviceModalSubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Nombre, duración y precio.</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
-                <form method="post" action="{{ route('services.store', [], false) }}" class="px-5 py-4">
+                <form
+                    id="serviceForm"
+                    method="post"
+                    action="{{ (old('_form') === 'service' && old('service_id')) ? route('services.update', ['service' => old('service_id')], false) : route('services.store', [], false) }}"
+                    data-create-url="{{ route('services.store', [], false) }}"
+                    class="px-5 py-4"
+                >
                     @csrf
                     <input type="hidden" name="_form" value="service" />
+                    <input type="hidden" id="serviceEditId" name="service_id" value="{{ old('service_id') }}" />
+
+                    @if (old('_form') === 'service' && old('service_id'))
+                        @method('PATCH')
+                    @endif
 
                     @if ($errors->any() && old('_form') === 'service')
                         <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
@@ -116,28 +149,29 @@
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <label for="name" class="block text-sm font-semibold text-slate-700">Nombre</label>
-                            <input id="name" name="name" value="{{ old('name') }}" required class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <label for="name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Nombre</label>
+                            <input id="name" name="name" value="{{ old('name') }}" required class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
                         <div>
-                            <label for="duration_minutes" class="block text-sm font-semibold text-slate-700">Duración (min)</label>
-                            <input id="duration_minutes" name="duration_minutes" type="number" min="1" step="1" value="{{ old('duration_minutes') }}" required class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <label for="duration_minutes" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Duración (min)</label>
+                            <input id="duration_minutes" name="duration_minutes" type="number" min="1" step="1" value="{{ old('duration_minutes') }}" required class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
                         <div>
-                            <label for="price" class="block text-sm font-semibold text-slate-700">Precio</label>
-                            <input id="price" name="price" type="number" min="0" step="0.01" value="{{ old('price') }}" required class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <label for="price" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Precio</label>
+                            <input id="price" name="price" type="number" min="0" step="0.01" value="{{ old('price') }}" required class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
-                        <label class="sm:col-span-2 inline-flex items-center gap-2 text-sm text-slate-700">
-                            <input type="checkbox" name="is_active_new" value="1" @checked(old('is_active_new', '1') == '1') class="rounded border-slate-300 text-slate-900 focus:ring-slate-900" />
+                        <label class="sm:col-span-2 inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                            <input type="hidden" name="is_active_new" value="0" />
+                            <input type="checkbox" name="is_active_new" value="1" @checked(old('is_active_new', '1') == '1') class="rounded border-slate-300 text-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:text-slate-100 dark:focus:ring-slate-200" />
                             Activo
                         </label>
                     </div>
 
-                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>
+                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900" data-modal-close>
                             Cancelar
                         </button>
                         <button type="submit" class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">

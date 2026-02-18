@@ -51,14 +51,14 @@
     <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div class="overflow-x-auto">
             <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead class="bg-slate-50 dark:bg-slate-900">
+                <thead class="bg-slate-900 dark:bg-slate-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nombre</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">DNI</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Teléfono</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Email</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Deuda</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Acciones</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Nombre</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">DNI</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Teléfono</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Email</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Deuda</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -87,7 +87,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <td class="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap tabular-nums">
                                 $ {{ number_format(($client->balance_cents ?? 0) / 100, 2, ',', '.') }}
                             </td>
                             <td class="px-4 py-3 text-right" data-stop-row-click>
@@ -137,9 +137,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo cliente</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">Completá los datos y confirmá.</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form method="post" action="{{ route('clients.store', [], false) }}" class="px-5 py-4">
@@ -212,9 +210,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Editar cliente</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400" id="clientEditSubtitle">—</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form id="clientEditForm" method="post" action="" data-action-template="{{ route('clients.index', [], false) }}/__ID__" class="px-5 py-4">

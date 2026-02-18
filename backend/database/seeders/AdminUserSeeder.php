@@ -27,9 +27,17 @@ class AdminUserSeeder extends Seeder
         $receptionEmail = env('SPA_DEMO_RECEPTION_EMAIL', 'recepcion@local.test');
         $professionalEmail = env('SPA_DEMO_PROFESSIONAL_EMAIL', 'profesional@local.test');
 
-        $adminPassword = $this->normalizePassword(env('SPA_DEMO_ADMIN_PASSWORD'));
-        $receptionPassword = $this->normalizePassword(env('SPA_DEMO_RECEPTION_PASSWORD'));
-        $professionalPassword = $this->normalizePassword(env('SPA_DEMO_PROFESSIONAL_PASSWORD'));
+        $adminPasswordRaw = env('SPA_DEMO_ADMIN_PASSWORD');
+        $receptionPasswordRaw = env('SPA_DEMO_RECEPTION_PASSWORD');
+        $professionalPasswordRaw = env('SPA_DEMO_PROFESSIONAL_PASSWORD');
+
+        $adminPasswordWasProvided = $this->wasProvided($adminPasswordRaw);
+        $receptionPasswordWasProvided = $this->wasProvided($receptionPasswordRaw);
+        $professionalPasswordWasProvided = $this->wasProvided($professionalPasswordRaw);
+
+        $adminPassword = $this->normalizePassword($adminPasswordRaw);
+        $receptionPassword = $this->normalizePassword($receptionPasswordRaw);
+        $professionalPassword = $this->normalizePassword($professionalPasswordRaw);
 
         $adminUser = User::query()->where('email', $adminEmail)->first();
         $receptionUser = User::query()->where('email', $receptionEmail)->first();
@@ -39,18 +47,21 @@ class AdminUserSeeder extends Seeder
         $generatedReceptionPassword = null;
         $generatedProfessionalPassword = null;
 
-        if (! $adminUser && ! $adminPassword) {
-            $generatedAdminPassword = Str::password(16);
-            $adminPassword = $generatedAdminPassword;
-        }
-        if (! $receptionUser && ! $receptionPassword) {
-            $generatedReceptionPassword = Str::password(16);
-            $receptionPassword = $generatedReceptionPassword;
-        }
-        if (! $professionalUser && ! $professionalPassword) {
-            $generatedProfessionalPassword = Str::password(16);
-            $professionalPassword = $generatedProfessionalPassword;
-        }
+        [$adminPassword, $generatedAdminPassword] = $this->resolvePassword(
+            $adminUser,
+            $adminPassword,
+            $adminPasswordWasProvided
+        );
+        [$receptionPassword, $generatedReceptionPassword] = $this->resolvePassword(
+            $receptionUser,
+            $receptionPassword,
+            $receptionPasswordWasProvided
+        );
+        [$professionalPassword, $generatedProfessionalPassword] = $this->resolvePassword(
+            $professionalUser,
+            $professionalPassword,
+            $professionalPasswordWasProvided
+        );
 
         User::query()->updateOrCreate(
             ['email' => $adminEmail],
@@ -126,5 +137,31 @@ class AdminUserSeeder extends Seeder
         }
 
         return $value;
+    }
+
+    private function wasProvided(mixed $value): bool
+    {
+        return is_string($value) && trim($value) !== '';
+    }
+
+    /**
+     * @return array{0: string|null, 1: string|null} [passwordToSet, generatedPlainPasswordForOutput]
+     */
+    private function resolvePassword(?User $user, ?string $normalizedPassword, bool $wasProvided): array
+    {
+        if ($normalizedPassword) {
+            return [$normalizedPassword, null];
+        }
+
+        // If no valid password was provided:
+        // - Create new users with an auto-generated password.
+        // - If a password WAS provided but was invalid/weak (e.g. "1234"), reset to a generated one.
+        // - Otherwise keep existing password unchanged.
+        if (! $user || $wasProvided) {
+            $generated = Str::password(16);
+            return [$generated, $generated];
+        }
+
+        return [null, null];
     }
 }

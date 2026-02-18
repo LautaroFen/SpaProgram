@@ -59,14 +59,15 @@
         <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
             <div class="overflow-x-auto">
                 <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                    <thead class="bg-slate-50 dark:bg-slate-900">
+                    <thead class="bg-slate-900 dark:bg-slate-900">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nombre</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Email</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Rol</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Cargo</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Alta</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Acciones</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Nombre</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Email</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Rol</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Cargo</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Alta</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -101,6 +102,15 @@
                                     {{ $user->job_title ?? '—' }}
                                 </td>
                                 <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">{{ $user->created_at?->isoFormat('D MMM YYYY') ?? '—' }}</td>
+                                <td class="px-4 py-3" data-stop-row-click>
+                                    <span @class([
+                                        'inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 text-xs font-semibold',
+                                        'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200' => $user->is_active,
+                                        'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300' => ! $user->is_active,
+                                    ])>
+                                        {{ $user->is_active ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </td>
                                 <td class="px-4 py-3 text-right" data-stop-row-click>
                                     <button
                                         type="button"
@@ -120,7 +130,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No hay usuarios para mostrar.</td>
+                                <td colspan="7" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No hay usuarios para mostrar.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -183,11 +193,11 @@
         <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
             <div class="overflow-x-auto">
                 <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                    <thead class="bg-slate-50 dark:bg-slate-900">
+                    <thead class="bg-slate-900 dark:bg-slate-900">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nombre</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Usuarios</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Acciones</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Nombre</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Usuarios</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -247,9 +257,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo usuario</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">Creá un usuario y asignale un rol.</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form method="post" action="{{ route('users.store', [], false) }}" class="px-5 py-4">
@@ -346,9 +354,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo rol</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">Usá un nombre corto, por ejemplo: <span class="font-semibold">recepcion</span>.</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form method="post" action="{{ route('users.roles.store', [], false) }}" class="px-5 py-4">
@@ -417,9 +423,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Editar usuario</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400" id="userStatusSubtitle">—</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form id="userStatusForm" method="post" action="" data-action-template="{{ route('users.index', [], false) }}/__ID__" class="px-5 py-4">
@@ -518,9 +522,7 @@
                         <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Editar rol</div>
                         <div class="mt-1 text-sm text-slate-500 dark:text-slate-400" id="roleStatusSubtitle">—</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form id="roleStatusForm" method="post" action="" data-action-template="{{ route('users.index', [], false) }}/roles/__ID__" class="px-5 py-4">

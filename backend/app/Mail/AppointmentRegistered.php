@@ -25,10 +25,10 @@ class AppointmentRegistered extends Mailable
 
     public function content(): Content
     {
-        $logoSrc = asset('images/LogoNegro.jpeg');
-        $logoPath = public_path('images/LogoNegro.jpeg');
+        $logoSrc = asset('images/LogoEmail.jpeg');
+        $logoPath = public_path('images/LogoEmail.jpeg');
         if (is_string($logoPath) && is_file($logoPath)) {
-            $cid = 'logonegro';
+            $cid = 'logoemail';
             $logoSrc = 'cid:'.$cid;
 
             $this->withSymfonyMessage(function (Email $message) use ($logoPath, $cid) {

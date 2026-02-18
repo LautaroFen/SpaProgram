@@ -65,14 +65,14 @@
         <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
             <div class="overflow-x-auto">
                 <table class="table-grid min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                    <thead class="bg-slate-50 dark:bg-slate-900">
+                    <thead class="bg-slate-900 dark:bg-slate-900">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Fecha</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Cliente</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Monto</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Método</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Estado</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Acciones</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Fecha</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Cliente</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Monto</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Método</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white dark:text-slate-200 whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -85,7 +85,7 @@
                                 <td class="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     {{ $payment->client?->full_name ?? '—' }}
                                 </td>
-                                <td class="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                <td class="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap tabular-nums">
                                     $ {{ number_format(($payment->amount_cents ?? 0) / 100, 2, ',', '.') }}
                                 </td>
                                 <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
@@ -111,38 +111,33 @@
                                     {{ $methodLabels[$payment->method] ?? $payment->method }}
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="text-xs rounded-full px-2 py-1 font-semibold {{ $statusClass }}">{{ $statusLabels[$payment->status] ?? $payment->status }}</span>
+                                    <span class="inline-flex items-center whitespace-nowrap text-xs rounded-full px-2 py-1 font-semibold {{ $statusClass }}">{{ $statusLabels[$payment->status] ?? $payment->status }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-right" data-stop-row-click>
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
-                                            data-payment-edit-button
-                                            data-payment-id="{{ $payment->id }}"
-                                            data-payment-amount="{{ number_format(((int) ($payment->amount_cents ?? 0)) / 100, 2, '.', '') }}"
-                                            data-client-name="{{ $payment->client?->full_name ?? '—' }}"
-                                        >
-                                            Editar
-                                        </button>
-
-                                        <form
-                                            method="post"
-                                            action="{{ route('payments.destroy', $payment, false) }}"
-                                            data-confirm-delete-payment
-                                            data-client-name="{{ $payment->client?->full_name ?? '—' }}"
-                                        >
-                                            @csrf
-                                            @method('delete')
-
+                                <td class="px-4 py-3" data-stop-row-click>
+                                    @if ($payment->status === 'partial' && $payment->client_id)
+                                        @if ($payment->appointment_id)
+                                            <form method="post" action="{{ route('payments.complete', ['payment' => $payment->id], false) }}" class="inline">
+                                                @csrf
+                                                <button
+                                                    type="submit"
+                                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+                                                >
+                                                    Completar
+                                                </button>
+                                            </form>
+                                        @else
                                             <button
-                                                type="submit"
-                                                class="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950/30"
+                                                type="button"
+                                                disabled
+                                                class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-400 cursor-not-allowed dark:border-slate-700 dark:bg-slate-950 dark:text-slate-500"
+                                                title="Este pago parcial no tiene turno asociado"
                                             >
-                                                Borrar
+                                                Completar
                                             </button>
-                                        </form>
-                                    </div>
+                                        @endif
+                                    @else
+                                        <span class="text-sm text-slate-400 dark:text-slate-500">—</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -171,15 +166,13 @@
         <div class="absolute inset-0 bg-slate-900/50" data-modal-overlay></div>
 
         <div class="relative mx-auto flex min-h-full max-w-2xl items-start justify-center p-4 sm:items-center">
-            <div class="w-full max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl bg-white shadow-xl">
-                <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+            <div class="w-full max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-slate-950">
+                <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
                     <div>
-                        <div class="text-lg font-semibold text-slate-900">Registrar pago</div>
-                        <div class="mt-1 text-sm text-slate-500">Asociá un cliente (y opcionalmente un turno).</div>
+                        <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">Registrar pago</div>
+                        <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">Asociá un cliente (y opcionalmente un turno).</div>
                     </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700" data-modal-close>
-                        Cerrar
-                    </button>
+                    
                 </div>
 
                 <form method="post" action="{{ route('payments.store', [], false) }}" class="px-5 py-4">
@@ -199,8 +192,8 @@
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <label for="client_id" class="block text-sm font-semibold text-slate-700">Cliente</label>
-                            <select id="client_id" name="client_id" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900">
+                            <label for="client_id" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Cliente</label>
+                            <select id="client_id" name="client_id" class="mt-1 w-full rounded-lg border border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200">
                                 <option value="">Nuevo cliente…</option>
                                 @foreach ($clients as $client)
                                     <option value="{{ $client->id }}" @selected(old('_form') === 'payment' && old('client_id') == $client->id)>
@@ -208,37 +201,37 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="mt-1 text-xs text-slate-500">Si el cliente no existe, dejalo en “Nuevo cliente” y completá los datos.</p>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Si el cliente no existe, dejalo en “Nuevo cliente” y completá los datos.</p>
                         </div>
 
                         <div id="newPaymentClientFields" class="sm:col-span-2">
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label for="client_first_name" class="block text-sm font-semibold text-slate-700">Nombre</label>
-                                    <input id="client_first_name" name="client_first_name" value="{{ old('_form') === 'payment' ? old('client_first_name') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                                    <label for="client_first_name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Nombre</label>
+                                    <input id="client_first_name" name="client_first_name" value="{{ old('_form') === 'payment' ? old('client_first_name') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                                 </div>
                                 <div>
-                                    <label for="client_last_name" class="block text-sm font-semibold text-slate-700">Apellido</label>
-                                    <input id="client_last_name" name="client_last_name" value="{{ old('_form') === 'payment' ? old('client_last_name') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                                    <label for="client_last_name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Apellido</label>
+                                    <input id="client_last_name" name="client_last_name" value="{{ old('_form') === 'payment' ? old('client_last_name') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                                 </div>
                                 <div>
-                                    <label for="client_phone" class="block text-sm font-semibold text-slate-700">Teléfono</label>
-                                    <input id="client_phone" name="client_phone" value="{{ old('_form') === 'payment' ? old('client_phone') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                                    <label for="client_phone" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Teléfono</label>
+                                    <input id="client_phone" name="client_phone" value="{{ old('_form') === 'payment' ? old('client_phone') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                                 </div>
                                 <div>
-                                    <label for="client_email" class="block text-sm font-semibold text-slate-700">Email (opcional)</label>
-                                    <input id="client_email" name="client_email" type="email" value="{{ old('_form') === 'payment' ? old('client_email') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                                    <label for="client_email" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email (opcional)</label>
+                                    <input id="client_email" name="client_email" type="email" value="{{ old('_form') === 'payment' ? old('client_email') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                                 </div>
                                 <div>
-                                    <label for="client_dni" class="block text-sm font-semibold text-slate-700">DNI (opcional)</label>
-                                    <input id="client_dni" name="client_dni" value="{{ old('_form') === 'payment' ? old('client_dni') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                                    <label for="client_dni" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">DNI (opcional)</label>
+                                    <input id="client_dni" name="client_dni" value="{{ old('_form') === 'payment' ? old('client_dni') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                                 </div>
                             </div>
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="appointment_id" class="block text-sm font-semibold text-slate-700">Turno (opcional)</label>
-                            <select id="appointment_id" name="appointment_id" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900">
+                            <label for="appointment_id" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Turno (opcional)</label>
+                            <select id="appointment_id" name="appointment_id" class="mt-1 w-full rounded-lg border border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200">
                                 <option value="">Sin turno</option>
                                 @foreach ($appointments as $appt)
                                     <option
@@ -251,17 +244,17 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p id="appointmentRemainingHint" class="mt-1 text-xs text-slate-500">Seleccioná un turno para cargar el saldo automáticamente.</p>
+                            <p id="appointmentRemainingHint" class="mt-1 text-xs text-slate-500 dark:text-slate-400">Seleccioná un turno para cargar el saldo automáticamente.</p>
                         </div>
 
                         <div>
-                            <label for="amount" class="block text-sm font-semibold text-slate-700">Monto</label>
-                            <input id="amount" name="amount" type="number" min="0" step="0.01" value="{{ old('_form') === 'payment' ? old('amount') : '' }}" required class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <label for="amount" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Monto</label>
+                            <input id="amount" name="amount" type="number" min="0" step="0.01" value="{{ old('_form') === 'payment' ? old('amount') : '' }}" required class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
                         <div>
-                            <label for="method_new" class="block text-sm font-semibold text-slate-700">Método</label>
-                            <select id="method_new" name="method_new" required class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900">
+                            <label for="method_new" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Método</label>
+                            <select id="method_new" name="method_new" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200">
                                 <option value="cash" @selected(old('_form') === 'payment' ? old('method_new', 'cash') === 'cash' : true)>Efectivo</option>
                                 <option value="card" @selected(old('_form') === 'payment' && old('method_new') === 'card')>Tarjeta</option>
                                 <option value="transfer" @selected(old('_form') === 'payment' && old('method_new') === 'transfer')>Transferencia</option>
@@ -270,89 +263,22 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="reference" class="block text-sm font-semibold text-slate-700">Referencia (opcional)</label>
-                            <input id="reference" name="reference" value="{{ old('_form') === 'payment' ? old('reference') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900" />
+                            <label for="reference" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Referencia (opcional)</label>
+                            <input id="reference" name="reference" value="{{ old('_form') === 'payment' ? old('reference') : '' }}" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200" />
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="notes" class="block text-sm font-semibold text-slate-700">Notas (opcional)</label>
-                            <textarea id="notes" name="notes" rows="3" class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900">{{ old('_form') === 'payment' ? old('notes') : '' }}</textarea>
+                            <label for="notes" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Notas (opcional)</label>
+                            <textarea id="notes" name="notes" rows="3" class="mt-1 w-full rounded-lg border-slate-300 bg-white text-slate-900 focus:border-slate-900 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-200 dark:focus:ring-slate-200">{{ old('_form') === 'payment' ? old('notes') : '' }}</textarea>
                         </div>
                     </div>
 
-                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>
+                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900" data-modal-close>
                             Cancelar
                         </button>
                         <button type="submit" class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
                             Aceptar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div
-        id="paymentEditModal"
-        data-open-on-load="{{ ($errors->any() && old('_form') === 'payment_edit') ? '1' : '0' }}"
-        class="fixed inset-0 z-50 hidden"
-        aria-hidden="true"
-    >
-        <div class="absolute inset-0 bg-slate-900/50" data-modal-overlay></div>
-
-        <div class="relative mx-auto flex min-h-full max-w-2xl items-start justify-center p-4 sm:items-center">
-            <div class="w-full max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl bg-white shadow-xl">
-                <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
-                    <div>
-                        <div class="text-lg font-semibold text-slate-900">Editar pago</div>
-                        <div class="mt-1 text-sm text-slate-500" id="paymentEditSubtitle">—</div>
-                    </div>
-                    <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700" data-modal-close>
-                        Cerrar
-                    </button>
-                </div>
-
-                <form id="paymentEditForm" method="post" action="" data-action-template="{{ route('payments.index', [], false) }}/__ID__" class="px-5 py-4">
-                    @csrf
-                    @method('patch')
-
-                    <input type="hidden" name="_form" value="payment_edit" />
-                    <input type="hidden" name="_edit_id" id="paymentEditId" value="{{ old('_form') === 'payment_edit' ? old('_edit_id') : '' }}" />
-
-                    @if ($errors->any() && old('_form') === 'payment_edit')
-                        <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                            <div class="font-semibold">Revisá estos campos:</div>
-                            <ul class="mt-1 list-disc pl-5">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label for="paymentEditAmount" class="block text-sm font-semibold text-slate-700">Monto</label>
-                            <input
-                                id="paymentEditAmount"
-                                name="amount"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                required
-                                value="{{ old('_form') === 'payment_edit' ? old('amount') : '' }}"
-                                class="mt-1 w-full rounded-lg border-slate-300 focus:border-slate-900 focus:ring-slate-900"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-                        <button type="button" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>
-                            Cancelar
-                        </button>
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                            Guardar
                         </button>
                     </div>
                 </form>

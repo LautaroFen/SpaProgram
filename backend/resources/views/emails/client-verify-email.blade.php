@@ -17,7 +17,7 @@
                     <tr>
                         <td align="center" style="padding:32px 24px 10px 24px;">
                             <img
-                                src="{{ $logoSrc ?: asset('images/LogoNegro.jpeg') }}"
+                                src="{{ $logoSrc ?: asset('images/LogoEmail.jpeg') }}"
                                 alt="Logo"
                                 width="140"
                                 style="display:block;width:140px;max-width:100%;height:auto;"
