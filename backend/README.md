@@ -191,31 +191,3 @@ MAIL_FROM_NAME="SpaProgram"
 3) Limpiá config cache:
 
 `php artisan config:clear`
-
-### Producción (Hostinger)
-
-Guía de deploy paso a paso: `DEPLOY_HOSTINGER.md`.
-
-Ejemplo de variables de entorno para producción: `.env.hostinger.example`.
-
-En Hostinger (hPanel) buscá los datos SMTP del email que vas a usar (normalmente en “Configurar cliente de correo” / “SMTP”).
-Luego completá en el `.env` del servidor:
-
-```
-APP_URL=https://tudominio.com
-
-MAIL_MAILER=smtp
-MAIL_HOST=<smtp_hostinger>
-MAIL_PORT=<587_o_465>
-MAIL_ENCRYPTION=<tls_o_ssl>
-MAIL_USERNAME=<tu_email_del_dominio>
-MAIL_PASSWORD=<password_del_email>
-MAIL_FROM_ADDRESS=<tu_email_del_dominio>
-MAIL_FROM_NAME="Spa <Nombre>"
-```
-
-Después ejecutá:
-
-`php artisan config:clear`
-
-> Importante: en DNS configurá SPF/DKIM (y si podés DMARC) para buena entregabilidad.
